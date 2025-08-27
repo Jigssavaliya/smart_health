@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:smart_health/app/modules/sleep/model/sleep_record_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../data/service/SupabaseService.dart';
@@ -15,7 +16,7 @@ class HomeController extends GetxController {
   RxList<double> sleepMinutes = <double>[0, 0, 0, 0, 0, 0, 0].obs;
   RxList<double> walkingKms = <double>[0, 0, 0, 0, 0, 0, 0].obs;
 
-
+  RxList<AlertModel> alerts = <AlertModel>[].obs;
 
   @override
   void onInit() {
@@ -25,6 +26,7 @@ class HomeController extends GetxController {
     fetchCaloriesData();
     fetchWalkingData();
     fetchWaterIntakeGoal();
+    fetchAlerts();
     super.onInit();
   }
 
@@ -63,8 +65,15 @@ class HomeController extends GetxController {
     walkingKm.value = response?.distanceKm ?? 0;
   }
 
-  void fetchWaterIntakeGoal() async{
+  void fetchWaterIntakeGoal() async {
     var response = await SupabaseService.instance.getGoalBasedOnType("water");
-    waterIntakeGoal.value=response?["goal_value"];
+    waterIntakeGoal.value = response?["goal_value"];
+  }
+
+  void fetchAlerts() async {
+    var response = await SupabaseService.instance.getAlert();
+    if (response != null) {
+      alerts.value = response;
+    }
   }
 }

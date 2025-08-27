@@ -1,3 +1,4 @@
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 
 import 'package:get/get.dart';
@@ -7,6 +8,7 @@ import 'package:smart_health/app/modules/profile_screen/views/profile_screen_vie
 import 'package:smart_health/app/routes/app_pages.dart';
 
 import '../../../data/service/common_function.dart';
+import '../../sleep/model/sleep_record_model.dart';
 import '../../waking_activity/views/waking_activity_view.dart';
 import '../controllers/home_controller.dart';
 
@@ -162,7 +164,9 @@ class HomePageActivity extends GetView<HomeController> {
         const SizedBox(height: 16),
         _buildActivitySection(context),
         const SizedBox(height: 16),
-        _buildWowCard(),
+        Obx(() => AlertsCarousel(
+              alerts: controller.alerts.value,
+            )),
         const SizedBox(height: 16),
         Obx(() => _buildTotalSleepCard(controller.sleepMinutes)),
       ],
@@ -186,7 +190,7 @@ class HomePageActivity extends GetView<HomeController> {
             children: [
               Obx(() => _buildMiniCard("${controller.burnedCalories.value} kcal", "Calories", Icons.local_fire_department, const Color(0xFFD0ECE7))),
               const SizedBox(height: 16),
-              Obx(()=>_buildMiniCard("${controller.waterIntakeGoal.value} L", "Water Intake", Icons.water_drop, const Color(0xFFE8DAEF))),
+              Obx(() => _buildMiniCard("${controller.waterIntakeGoal.value} L", "Water Intake", Icons.water_drop, const Color(0xFFE8DAEF))),
             ],
           ),
         ),
@@ -397,6 +401,104 @@ class HomePageActivity extends GetView<HomeController> {
                   icon: Transform.rotate(angle: 1, child: Icon(Icons.arrow_upward))),
             ))
       ],
+    );
+  }
+}
+
+class AlertsCarousel extends StatelessWidget {
+  final List<AlertModel> alerts;
+
+  const AlertsCarousel({super.key, required this.alerts});
+
+  Color _getBackgroundColor(String type) {
+    switch (type) {
+      case 'walking':
+        return const Color(0xFFD0ECE7); // light green
+      case 'calories':
+        return const Color(0xFFFFE0B2); // light orange
+      case 'sleep':
+        return const Color(0xFFD6EAF8); // light blue
+      case 'water':
+        return const Color(0xFFEBDEF0); // light purple
+      default:
+        return Colors.grey.shade200;
+    }
+  }
+
+  IconData _getIcon(String type) {
+    switch (type) {
+      case 'walking':
+        return Icons.directions_walk;
+      case 'calories':
+        return Icons.local_fire_department;
+      case 'sleep':
+        return Icons.bedtime;
+      case 'water':
+        return Icons.local_drink;
+      default:
+        return Icons.info;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (alerts.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return CarouselSlider(
+      options: CarouselOptions(
+        height: 110,
+        viewportFraction: 1.0, // 👈 full width
+        enlargeCenterPage: false,
+        enableInfiniteScroll: false,
+        autoPlay: true,
+        autoPlayInterval: const Duration(seconds: 5),
+      ),
+      items: alerts.map((alert) {
+        final type = alert.type ?? 'info';
+        final message = alert.message ?? '';
+        return Builder(
+          builder: (BuildContext context) {
+            return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 8),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: _getBackgroundColor(type),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(15),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      _getIcon(type),
+                      color: Colors.black,
+                      size: 25,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      message,
+                      style: GoogleFonts.roboto(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      }).toList(),
     );
   }
 }

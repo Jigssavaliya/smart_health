@@ -12,7 +12,7 @@ class SplashController extends GetxController {
       () async{
         var response = Supabase.instance.client.auth.currentUser;
         if (response != null) {
-          await _insertMissingData();
+          //await _insertMissingData();
           Get.offAllNamed(Routes.HOME);
         } else {
           Get.offAllNamed(Routes.LOGIN);

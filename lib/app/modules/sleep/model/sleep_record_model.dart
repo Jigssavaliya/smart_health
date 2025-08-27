@@ -8,15 +8,7 @@ class SleepRecordModel {
   String? createdAt;
   String? updatedAt;
 
-  SleepRecordModel(
-      {this.id,
-        this.userId,
-        this.date,
-        this.durationMinutes,
-        this.quality,
-        this.bedtimeConsistency,
-        this.createdAt,
-        this.updatedAt});
+  SleepRecordModel({this.id, this.userId, this.date, this.durationMinutes, this.quality, this.bedtimeConsistency, this.createdAt, this.updatedAt});
 
   SleepRecordModel.fromJson(Map<String, dynamic> json) {
     id = json['id'];
@@ -47,3 +39,17 @@ List<SleepRecordModel> sleepRecordListFromJson(List<dynamic> jsonList) {
   return jsonList.map((json) => SleepRecordModel.fromJson(json as Map<String, dynamic>)).toList();
 }
 
+class AlertModel {
+  String? type;
+  String? message;
+
+  AlertModel({
+    this.type,
+    this.message,
+  });
+
+  AlertModel.fromJson(Map<String, dynamic> json) {
+    type = json['alert_type'];
+    message = json['alert_message'];
+  }
+}

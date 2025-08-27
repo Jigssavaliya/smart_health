@@ -231,6 +231,26 @@ class SupabaseService {
     }
   }
 
+  Future<List<AlertModel>?> getAlert() async {
+    final supabase = Supabase.instance.client;
+
+    try {
+      final response = await supabase.rpc('get_health_alerts');
+      if (response != null && response is List && response.isNotEmpty) {
+        return response
+            .map(
+              (e) => AlertModel.fromJson(e),
+            )
+            .toList();
+      } else {
+        return null;
+      }
+    } catch (e) {
+      print("❌ Error get alert: $e");
+    }
+    return null;
+  }
+
   Future<Map<String, dynamic>?> getGoalBasedOnType(String type) async {
     var response = await Supabase.instance.client
         .from("daily_goals")
