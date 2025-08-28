@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -48,63 +50,99 @@ class SleepView extends GetView<SleepController> {
                   Obx(() {
                     return Visibility(
                       visible: controller.sleepSuggestion.isNotEmpty,
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                        child: Card(
-                          elevation: 3,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          color: Colors.teal.shade50,
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(24),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.teal.withOpacity(0.15),
+                                  Colors.teal.withOpacity(0.05),
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(
+                                color: Colors.teal.withOpacity(0.2),
+                                width: 1.2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.teal.withOpacity(0.15),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ],
+                            ),
+                            padding: const EdgeInsets.all(20),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Title Row
+                                // Header
                                 Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
-                                    const Icon(Icons.lightbulb_rounded, color: Colors.teal, size: 28),
+                                    const Icon(Icons.nightlight_round,
+                                        color: Colors.teal, size: 26),
                                     const SizedBox(width: 10),
                                     Text(
                                       "Sleep Suggestions",
                                       style: GoogleFonts.poppins(
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.w600,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w700,
                                         color: Colors.teal.shade900,
                                       ),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 12),
+                                const SizedBox(height: 18),
 
-                                // Suggestion List
+                                // Suggestions
                                 Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: List.generate(
                                     controller.sleepSuggestion.length,
                                         (index) {
-                                      return Padding(
-                                        padding: const EdgeInsets.all(8.0),
+                                      final text = controller.sleepSuggestion[index];
+                                      final emojis = ["😴", "🌙", "🛏", "☕", "📵"];
+                                      final emoji = emojis[index % emojis.length];
+
+                                      return AnimatedContainer(
+                                        duration: Duration(milliseconds: 400 + index * 100),
+                                        curve: Curves.easeOutCubic,
+                                        margin: const EdgeInsets.only(bottom: 14),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 14,
+                                          vertical: 12,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withOpacity(0.9),
+                                          borderRadius: BorderRadius.circular(16),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withOpacity(0.05),
+                                              blurRadius: 8,
+                                              offset: const Offset(0, 4),
+                                            ),
+                                          ],
+                                        ),
                                         child: Row(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
-                                            const Text(
-                                              "• ",
-                                              style: TextStyle(
-                                                fontSize: 16,
-                                                color: Colors.teal,
-                                              ),
+                                            Text(
+                                              emoji,
+                                              style: const TextStyle(fontSize: 20),
                                             ),
+                                            const SizedBox(width: 12),
                                             Expanded(
                                               child: Text(
-                                                controller.sleepSuggestion[index],
+                                                text,
                                                 style: GoogleFonts.poppins(
-                                                  fontSize: 16,
+                                                  fontSize: 15,
                                                   fontWeight: FontWeight.w500,
-                                                  color: Colors.teal.shade800,
-                                                  height: 1.4,
+                                                  height: 1.5,
+                                                  color: Colors.black87,
                                                 ),
                                               ),
                                             ),
@@ -121,7 +159,9 @@ class SleepView extends GetView<SleepController> {
                       ),
                     );
                   }),
-                  const SizedBox(height: 20),
+                  const SizedBox(
+                    height: 18,
+                  ),
                   Obx(
                     () => controller.records.value != null
                         ? Column(

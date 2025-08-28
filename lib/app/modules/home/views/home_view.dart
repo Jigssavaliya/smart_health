@@ -188,9 +188,25 @@ class HomePageActivity extends GetView<HomeController> {
           flex: 3,
           child: Column(
             children: [
-              Obx(() => _buildMiniCard("${controller.burnedCalories.value} kcal", "Calories", Icons.local_fire_department, const Color(0xFFD0ECE7))),
+              Obx(() => _buildMiniCard(
+                    "${controller.burnedCalories.value} kcal",
+                    "Calories",
+                    Icons.local_fire_department,
+                    const Color(0xFFD0ECE7),
+                    () {
+                      controller.onTabChange(2);
+                    },
+                  )),
               const SizedBox(height: 16),
-              Obx(() => _buildMiniCard("${controller.waterIntakeGoal.value} L", "Water Intake", Icons.water_drop, const Color(0xFFE8DAEF))),
+              Obx(() => _buildMiniCard(
+                    "${controller.waterIntakeGoal.value} L",
+                    "Water Intake",
+                    Icons.water_drop,
+                    const Color(0xFFE8DAEF),
+                    () {
+                      controller.onTabChange(3);
+                    },
+                  )),
             ],
           ),
         ),
@@ -199,47 +215,38 @@ class HomePageActivity extends GetView<HomeController> {
   }
 
   Widget _buildMainActivityCard(BuildContext context) {
-    return Container(
-      height: 240 + 16,
-      decoration: BoxDecoration(
-        color: const Color(0xFFEAF2F8),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Stack(
-        children: [
-          Positioned(right: 10, top: 10, child: _buildActivityIcon(Icons.directions_walk)),
-          Positioned(
-            left: 10,
-            top: 10,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Obx(() => Text("${controller.walkingKm.value} km", style: GoogleFonts.roboto(fontSize: 22, fontWeight: FontWeight.bold))),
-                Text("Walking", style: GoogleFonts.roboto(color: Colors.grey, fontSize: 16)),
-              ],
-            ),
-          ),
-          // Minimal chart
-          Positioned(
+    return GestureDetector(
+      onTap: () {
+        controller.onTabChange(1);
+      },
+      child: Container(
+        height: 240 + 16,
+        decoration: BoxDecoration(
+          color: const Color(0xFFEAF2F8),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Stack(
+          children: [
+            Positioned(right: 10, top: 10, child: _buildActivityIcon(Icons.directions_walk)),
+            Positioned(
               left: 10,
-              right: 10,
-              bottom: 10,
-              child: SizedBox(child: Obx(() => _buildSleepGraph(context, 100, 10, Colors.black, controller.walkingKms)))),
-          // Positioned(
-          //   left: 10, right: 10, bottom: 10,
-          //   child: Row(
-          //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          //     children: ["M", "T", "W", "T", "F", "S", "S"]
-          //         .map(
-          //           (e) => SizedBox(
-          //             width: 10,
-          //             child: Text(e),
-          //           ),
-          //         )
-          //         .toList(),
-          //   ),
-          // )
-        ],
+              top: 10,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Obx(() => Text("${controller.walkingKm.value} km", style: GoogleFonts.roboto(fontSize: 22, fontWeight: FontWeight.bold))),
+                  Text("Walking", style: GoogleFonts.roboto(color: Colors.grey, fontSize: 16)),
+                ],
+              ),
+            ),
+            // Minimal chart
+            Positioned(
+                left: 10,
+                right: 10,
+                bottom: 10,
+                child: SizedBox(child: Obx(() => _buildSleepGraph(context, 100, 10, Colors.black, controller.walkingKms)))),
+          ],
+        ),
       ),
     );
   }
@@ -252,37 +259,49 @@ class HomePageActivity extends GetView<HomeController> {
     );
   }
 
-  Widget _buildMiniCard(String value, String label, IconData icon, Color bgColor) {
-    return Container(
-      height: 120,
-      width: double.maxFinite,
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Stack(
-        children: [
-          Positioned(top: 10, right: 10, child: _buildActivityIcon(icon)),
-          Positioned(
-            bottom: 10,
-            left: 10,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(value, style: GoogleFonts.roboto(fontSize: 22, fontWeight: FontWeight.bold)),
-                Text(label, style: GoogleFonts.roboto(color: Colors.grey, fontSize: 16)),
-              ],
+  Widget _buildMiniCard(String value, String label, IconData icon, Color bgColor, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: () {
+        onTap.call();
+      },
+      child: Container(
+        height: 120,
+        width: double.maxFinite,
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Stack(
+          children: [
+            Positioned(top: 10, right: 10, child: _buildActivityIcon(icon)),
+            Positioned(
+              bottom: 10,
+              left: 10,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(value, style: GoogleFonts.roboto(fontSize: 22, fontWeight: FontWeight.bold)),
+                  Text(label, style: GoogleFonts.roboto(color: Colors.grey, fontSize: 16)),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildSleepGraph(BuildContext context, double height, double width, Color color, List<double> data) {
+  Widget _buildSleepGraph(
+    BuildContext context,
+    double height,
+    double width,
+    Color color,
+    List<double> data,
+  ) {
     double maxVal = data.reduce((a, b) => a > b ? a : b);
     List<String> days = ["M", "T", "W", "T", "F", "S", "S"];
+    int today = DateTime.now().weekday - 1;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -292,76 +311,50 @@ class HomePageActivity extends GetView<HomeController> {
         double val = entry.value;
 
         double barHeight = maxVal == 0 ? 0 : (val / maxVal) * height;
-        bool isHighlighted = val >= 5;
+        bool isToday = index == today;
 
         return Expanded(
           child: Column(
             children: [
+              // Animated bar
               AnimatedContainer(
                 key: ValueKey(index),
-                // optional but useful
-                duration: const Duration(milliseconds: 300),
+                duration: const Duration(milliseconds: 500),
+                curve: Curves.easeOutCubic,
                 width: width,
                 height: barHeight,
                 decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(5),
+                  gradient: LinearGradient(
+                    colors: [color.withOpacity(0.6), color],
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: isToday
+                      ? [
+                          BoxShadow(
+                            color: color.withOpacity(0.6),
+                            blurRadius: 2,
+                            offset: const Offset(0, 2),
+                          )
+                        ]
+                      : [],
                 ),
               ),
-              SizedBox(
-                height: 10,
-              ),
+              const SizedBox(height: 10),
+              // Day label
               Text(
                 days[index],
-                style: GoogleFonts.roboto(fontSize: 15, fontWeight: FontWeight.w800),
+                style: GoogleFonts.roboto(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87,
+                ),
               )
             ],
           ),
         );
       }).toList(),
-    );
-  }
-
-  Widget _buildWowCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFD0ECE7),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(15),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.emoji_events, color: Colors.black, size: 25),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Wow! You made it!",
-                  style: GoogleFonts.roboto(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  "Congratulations! You walked 5% more than the previous month. Keep it up 👏",
-                  style: GoogleFonts.roboto(fontSize: 14, color: Colors.black87),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -410,33 +403,33 @@ class AlertsCarousel extends StatelessWidget {
 
   const AlertsCarousel({super.key, required this.alerts});
 
-  Color _getBackgroundColor(String type) {
+  LinearGradient _getGradient(String type) {
     switch (type) {
       case 'walking':
-        return const Color(0xFFD0ECE7); // light green
+        return const LinearGradient(colors: [Color(0xFF76D7C4), Color(0xFFD0ECE7)]);
       case 'calories':
-        return const Color(0xFFFFE0B2); // light orange
+        return const LinearGradient(colors: [Color(0xFFFFA726), Color(0xFFFFE0B2)]);
       case 'sleep':
-        return const Color(0xFFD6EAF8); // light blue
+        return const LinearGradient(colors: [Color(0xFF5DADE2), Color(0xFFD6EAF8)]);
       case 'water':
-        return const Color(0xFFEBDEF0); // light purple
+        return const LinearGradient(colors: [Color(0xFFAF7AC5), Color(0xFFEBDEF0)]);
       default:
-        return Colors.grey.shade200;
+        return LinearGradient(colors: [Colors.grey.shade300, Colors.grey.shade100]);
     }
   }
 
   IconData _getIcon(String type) {
     switch (type) {
       case 'walking':
-        return Icons.directions_walk;
+        return Icons.directions_walk_rounded;
       case 'calories':
         return Icons.local_fire_department;
       case 'sleep':
-        return Icons.bedtime;
+        return Icons.bedtime_rounded;
       case 'water':
-        return Icons.local_drink;
+        return Icons.water_drop;
       default:
-        return Icons.info;
+        return Icons.info_outline;
     }
   }
 
@@ -448,30 +441,38 @@ class AlertsCarousel extends StatelessWidget {
 
     return CarouselSlider(
       options: CarouselOptions(
-        height: 110,
-        viewportFraction: 1.0, // 👈 full width
+        height: 120,
+        viewportFraction: 1.0,
         enlargeCenterPage: false,
-        enableInfiniteScroll: false,
+        enableInfiniteScroll: true,
         autoPlay: true,
-        autoPlayInterval: const Duration(seconds: 5),
+        autoPlayInterval: const Duration(seconds: 6),
       ),
       items: alerts.map((alert) {
         final type = alert.type ?? 'info';
         final message = alert.message ?? '';
+
         return Builder(
           builder: (BuildContext context) {
             return Container(
-              margin: const EdgeInsets.symmetric(horizontal: 8),
-              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: _getBackgroundColor(type),
+                gradient: _getGradient(type),
                 borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(15),
+                    margin: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(18),
                     decoration: const BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
@@ -479,18 +480,34 @@ class AlertsCarousel extends StatelessWidget {
                     child: Icon(
                       _getIcon(type),
                       color: Colors.black,
-                      size: 25,
+                      size: 30,
                     ),
                   ),
-                  const SizedBox(width: 12),
                   Expanded(
-                    child: Text(
-                      message,
-                      style: GoogleFonts.roboto(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black87,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          type.toUpperCase(), // Title like WALKING, CALORIES etc.
+                          style: GoogleFonts.roboto(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black.withOpacity(0.6),
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          message,
+                          style: GoogleFonts.roboto(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black87,
+                            height: 1.4, // better readability
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],

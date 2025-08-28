@@ -4,15 +4,14 @@ import 'package:smart_health/app/routes/app_pages.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SplashController extends GetxController {
-
   @override
-  void onInit()  {
+  void onInit() {
     Future.delayed(
       Duration(seconds: 2),
-      () async{
+      () async {
         var response = Supabase.instance.client.auth.currentUser;
         if (response != null) {
-          //await _insertMissingData();
+          await _insertMissingData();
           Get.offAllNamed(Routes.HOME);
         } else {
           Get.offAllNamed(Routes.LOGIN);
@@ -22,9 +21,7 @@ class SplashController extends GetxController {
     super.onInit();
   }
 
-  Future<void> _insertMissingData() async{
+  Future<void> _insertMissingData() async {
     await SupabaseService.instance.insertSleepRecords();
   }
-
-  
 }
