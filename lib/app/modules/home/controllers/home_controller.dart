@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:smart_health/app/modules/sleep/model/sleep_record_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -17,6 +18,15 @@ class HomeController extends GetxController {
   RxList<double> walkingKms = <double>[0, 0, 0, 0, 0, 0, 0].obs;
 
   RxList<AlertModel> alerts = <AlertModel>[].obs;
+
+  final CarouselController carouselController = CarouselController();
+
+
+  var oxygenLevel = 98.obs;       // in %
+  var bodyTemperature = 36.5.obs; // in °C
+  var heartBeat = 72.obs;         // bpm
+  RxInt alertCurrentIndex=0.obs;
+
 
   @override
   void onInit() {
@@ -74,6 +84,7 @@ class HomeController extends GetxController {
     var response = await SupabaseService.instance.getAlert();
     if (response != null) {
       alerts.value = response;
+      alerts.refresh();
     }
   }
 }
