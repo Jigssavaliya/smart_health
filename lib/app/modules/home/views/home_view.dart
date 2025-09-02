@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:smart_health/app/modules/calories_screen/views/calories_screen_view.dart';
+import 'package:smart_health/app/modules/home/model/dialy_vital_model.dart';
 import 'package:smart_health/app/modules/profile_screen/views/profile_screen_view.dart';
 import 'package:smart_health/app/routes/app_pages.dart';
 
@@ -18,6 +19,7 @@ class HomeView extends GetView<HomeController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      endDrawer: AlertsPanel(controller: controller),
       backgroundColor: Colors.grey[100],
       body: SafeArea(
         child: Obx(
@@ -165,36 +167,44 @@ class HomePageActivity extends GetView<HomeController> {
 
   @override
   Widget build(BuildContext _) {
-    return ListView(
-      children: [
-        const SizedBox(height: 16),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("Your Activity", style: GoogleFonts.roboto(fontSize: 32, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 16),
-              _buildActivitySection(context),
-              const SizedBox(height: 16),
+    return GestureDetector(
+      onHorizontalDragUpdate: (details) {
+        if (details.delta.dx < -10) {
+          // swipe left
+          Scaffold.of(context).openEndDrawer();
+        }
+      },
+      child: ListView(
+        children: [
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("Your Activity", style: GoogleFonts.roboto(fontSize: 32, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 16),
+                _buildActivitySection(context),
+                const SizedBox(height: 16),
 
-              // 👇 New Health Section
-              _buildHealthSection(context),
+                // 👇 New Health Section
+                Obx(() => _buildHealthSection(controller.vitalData.value)),
 
-              const SizedBox(height: 16),
-            ],
+                const SizedBox(height: 16),
+              ],
+            ),
           ),
-        ),
-        Obx(() => AlertsCarousel(
-              controller: controller,
-              list: controller.alerts.value,
-            )),
-        const SizedBox(height: 16),
-        Obx(() => Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _buildTotalSleepCard(controller.sleepMinutes),
-            )),
-      ],
+          Obx(() => AlertsCarousel(
+                controller: controller,
+                list: controller.alerts.value,
+              )),
+          const SizedBox(height: 16),
+          Obx(() => Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _buildTotalSleepCard(controller.sleepMinutes),
+              )),
+        ],
+      ),
     );
   }
 
@@ -245,37 +255,37 @@ class HomePageActivity extends GetView<HomeController> {
   // ------------------------
   // NEW HEALTH CARDS SECTION
   // ------------------------
-  Widget _buildHealthSection(BuildContext context) {
+  Widget _buildHealthSection(DailyVitalModel? model) {
     return Row(
       children: [
         Expanded(
-          child: Obx(() => _buildMiniCard(
-                "${controller.oxygenLevel.value} %",
-                "Oxygen",
-                Icons.bloodtype,
-                const Color(0xFFFFEBEE),
-                () {}, // can navigate to oxygen details
-              )),
+          child: _buildMiniCard(
+            "${model?.oxygenLevel ?? 0} %",
+            "Oxygen",
+            Icons.bloodtype,
+            const Color(0xFFFFEBEE),
+            () {}, // can navigate to oxygen details
+          ),
         ),
         const SizedBox(width: 16),
         Expanded(
-          child: Obx(() => _buildMiniCard(
-                "${controller.bodyTemperature.value} °C",
-                "Temperature",
-                Icons.device_thermostat,
-                const Color(0xFFE3F2FD),
-                () {},
-              )),
+          child: _buildMiniCard(
+            "${model?.bodyTemperature ?? 0} °C",
+            "Temperature",
+            Icons.device_thermostat,
+            const Color(0xFFE3F2FD),
+            () {},
+          ),
         ),
         const SizedBox(width: 16),
         Expanded(
-          child: Obx(() => _buildMiniCard(
-                "${controller.heartBeat.value} bpm",
-                "Heart Beat",
-                Icons.favorite,
-                const Color(0xFFFCE4EC),
-                () {},
-              )),
+          child: _buildMiniCard(
+            "${model?.heartRate ?? 0} bpm",
+            "Heart Beat",
+            Icons.favorite,
+            const Color(0xFFFCE4EC),
+            () {},
+          ),
         ),
       ],
     );
@@ -481,6 +491,12 @@ class AlertsCarousel extends StatelessWidget {
         return const LinearGradient(colors: [Color(0xFF6A11CB), Color(0xFF2575FC)], begin: Alignment.topLeft, end: Alignment.bottomRight);
       case 'water':
         return const LinearGradient(colors: [Color(0xFF00C6FF), Color(0xFF0072FF)], begin: Alignment.topLeft, end: Alignment.bottomRight);
+      case 'oxygen':
+        return const LinearGradient(colors: [Color(0xFF11998E), Color(0xFF38EF7D)], begin: Alignment.topLeft, end: Alignment.bottomRight);
+      case 'temperature':
+        return const LinearGradient(colors: [Color(0xFFFF8008), Color(0xFFFFC837)], begin: Alignment.topLeft, end: Alignment.bottomRight);
+      case 'heart rate':
+        return const LinearGradient(colors: [Color(0xFFE52D27), Color(0xFFB31217)], begin: Alignment.topLeft, end: Alignment.bottomRight);
       default:
         return LinearGradient(colors: [Colors.grey.shade300, Colors.grey.shade100], begin: Alignment.topLeft, end: Alignment.bottomRight);
     }
@@ -496,6 +512,12 @@ class AlertsCarousel extends StatelessWidget {
         return Icons.bedtime_rounded;
       case 'water':
         return Icons.water_drop;
+      case 'oxygen':
+        return Icons.bubble_chart;
+      case 'temperature':
+        return Icons.thermostat_rounded;
+      case 'heart rate':
+        return Icons.favorite_rounded;
       default:
         return Icons.info_outline;
     }
@@ -515,29 +537,38 @@ class AlertsCarousel extends StatelessWidget {
             final message = alert.message ?? '';
 
             return Container(
-              // margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
               decoration: BoxDecoration(
                 gradient: _getGradient(type),
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 12, offset: const Offset(0, 6))],
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.15),
+                    blurRadius: 14,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
               ),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   // Animated Icon Circle
                   AnimatedScale(
-                    duration: const Duration(milliseconds: 500),
+                    duration: const Duration(milliseconds: 400),
                     scale: 1,
+                    curve: Curves.easeInOut,
                     child: Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.white.withOpacity(0.95),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 6,
-                          )
+                            color: Colors.black.withOpacity(0.12),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
                         ],
                       ),
                       child: Icon(
@@ -547,31 +578,22 @@ class AlertsCarousel extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 20),
                   // Text section
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(
-                          type.toUpperCase(),
-                          style: GoogleFonts.roboto(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.3,
-                            color: Colors.white.withOpacity(0.9),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
                         Text(
                           message,
                           style: GoogleFonts.roboto(
-                            fontSize: 17,
+                            fontSize: 18,
                             fontWeight: FontWeight.w500,
                             color: Colors.white,
-                            height: 1.4,
+                            height: 1.5,
                           ),
-                          maxLines: 2,
+                          maxLines: 3,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ],
@@ -582,36 +604,217 @@ class AlertsCarousel extends StatelessWidget {
             );
           },
           options: CarouselOptions(
-            height: 140,
-            viewportFraction: 0.95,
+            height: 150,
+            viewportFraction: 0.9,
             enlargeCenterPage: true,
             enableInfiniteScroll: true,
             autoPlay: true,
+            autoPlayInterval: const Duration(seconds: 5),
             onPageChanged: (index, reason) {
               controller.alertCurrentIndex.value = index;
             },
-            autoPlayInterval: const Duration(seconds: 5),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
         // Smooth indicator
         Obx(() {
           return Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(
               controller.alerts.length,
-              (index) => Container(
-                margin: const EdgeInsets.symmetric(horizontal: 3),
-                width: 8,
+              (index) => AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                width: controller.alertCurrentIndex.value == index ? 20 : 8,
                 height: 8,
                 decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: controller.alertCurrentIndex.value == index ? Colors.blue : Colors.black.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(8),
+                  color: controller.alertCurrentIndex.value == index ? Colors.blueAccent : Colors.black.withOpacity(0.3),
                 ),
               ),
             ),
           );
         })
+      ],
+    );
+  }
+}
+
+class AlertsPanel extends StatelessWidget {
+  final HomeController controller;
+
+  const AlertsPanel({super.key, required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.6,
+      width: MediaQuery.of(context).size.width * 0.8,
+      margin: EdgeInsets.only(right: 15, top: 100),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 12,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: AlertsCarouselList(
+        controller: controller,
+        list: controller.alerts.value,
+      ),
+    );
+  }
+}
+
+class AlertsCarouselList extends StatelessWidget {
+  final HomeController controller;
+  final List<AlertModel> list;
+
+  const AlertsCarouselList({
+    super.key,
+    required this.controller,
+    required this.list,
+  });
+
+  LinearGradient _getGradient(String type) {
+    switch (type) {
+      case 'walking':
+        return const LinearGradient(colors: [Color(0xFF00C9A7), Color(0xFF92FE9D)], begin: Alignment.topLeft, end: Alignment.bottomRight);
+      case 'calories':
+        return const LinearGradient(colors: [Color(0xFFFF512F), Color(0xFFF09819)], begin: Alignment.topLeft, end: Alignment.bottomRight);
+      case 'sleep':
+        return const LinearGradient(colors: [Color(0xFF6A11CB), Color(0xFF2575FC)], begin: Alignment.topLeft, end: Alignment.bottomRight);
+      case 'water':
+        return const LinearGradient(colors: [Color(0xFF00C6FF), Color(0xFF0072FF)], begin: Alignment.topLeft, end: Alignment.bottomRight);
+      case 'oxygen':
+        return const LinearGradient(colors: [Color(0xFF11998E), Color(0xFF38EF7D)], begin: Alignment.topLeft, end: Alignment.bottomRight);
+      case 'temperature':
+        return const LinearGradient(colors: [Color(0xFFFF8008), Color(0xFFFFC837)], begin: Alignment.topLeft, end: Alignment.bottomRight);
+      case 'heart rate':
+        return const LinearGradient(colors: [Color(0xFFE52D27), Color(0xFFB31217)], begin: Alignment.topLeft, end: Alignment.bottomRight);
+      default:
+        return LinearGradient(colors: [Colors.grey.shade300, Colors.grey.shade100], begin: Alignment.topLeft, end: Alignment.bottomRight);
+    }
+  }
+
+  IconData _getIcon(String type) {
+    switch (type) {
+      case 'walking':
+        return Icons.directions_walk_rounded;
+      case 'calories':
+        return Icons.local_fire_department;
+      case 'sleep':
+        return Icons.bedtime_rounded;
+      case 'water':
+        return Icons.water_drop;
+      case 'oxygen':
+        return Icons.bubble_chart;
+      case 'temperature':
+        return Icons.thermostat_rounded;
+      case 'heart rate':
+        return Icons.favorite_rounded;
+      default:
+        return Icons.info_outline;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (controller.alerts.isEmpty) return const SizedBox.shrink();
+
+    return Stack(
+      children: [
+        ListView.builder(
+          shrinkWrap: true,
+          physics: BouncingScrollPhysics(),
+          itemCount: controller.alerts.length,
+          itemBuilder: (context, index) {
+            final alert = controller.alerts[index];
+            final type = alert.type ?? 'info';
+            final message = alert.message ?? '';
+
+            return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+              decoration: BoxDecoration(
+                gradient: _getGradient(type),
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.15),
+                    blurRadius: 14,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Icon Circle
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.95),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.12),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      _getIcon(type),
+                      size: 32,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  // Text
+                  Expanded(
+                    child: Text(
+                      message,
+                      style: GoogleFonts.roboto(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white,
+                        height: 1.5,
+                      ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  )
+                ],
+              ),
+            );
+          },
+        ),
+        Positioned(
+          right: 20,
+          top: 20,
+          child: GestureDetector(
+            onTap: () {
+              Scaffold.of(context).closeEndDrawer();
+            },
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.25),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.close_rounded,
+                size: 20,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }

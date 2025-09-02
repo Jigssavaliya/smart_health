@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:smart_health/app/modules/calories_screen/model/calories_activity_model.dart';
+import 'package:smart_health/app/modules/home/model/dialy_vital_model.dart';
 import 'package:smart_health/app/modules/profile_screen/model/user_model.dart';
 import 'package:smart_health/app/modules/sleep/model/sleep_record_model.dart';
 import 'package:smart_health/app/modules/sleep/model/sleep_tips_model.dart';
@@ -259,5 +260,29 @@ class SupabaseService {
         .eq("goal_type", type)
         .maybeSingle();
     return response;
+  }
+
+  Future<DailyVitalModel?> getDailyVital(DateTime date) async {
+    // Always work in UTC
+    final startDate = DateTime.utc(date.year, date.month, date.day);
+    final endDate = startDate.add(const Duration(days: 1));
+
+    final dateFormater = "yyyy-MM-dd'T'HH:mm:ss'Z'";
+
+    final startDateStr = DateFormat(dateFormater).format(startDate);
+    final endDateStr = DateFormat(dateFormater).format(endDate);
+
+    final response = await Supabase.instance.client
+        .from("daily_vitals")
+        .select('*')
+        .eq('user_id', Supabase.instance.client.auth.currentUser?.id ?? "")
+        .gte("date", startDateStr) // start of the day
+        .lt("date", endDateStr) // strictly before next day
+        .order("date", ascending: false);
+    if (response.isNotEmpty) {
+      return DailyVitalModel.fromJson(response.first);
+    } else {
+      return null;
+    }
   }
 }

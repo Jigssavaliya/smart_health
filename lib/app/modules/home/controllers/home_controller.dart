@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:smart_health/app/modules/home/model/dialy_vital_model.dart';
 import 'package:smart_health/app/modules/sleep/model/sleep_record_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -21,12 +22,12 @@ class HomeController extends GetxController {
 
   final CarouselController carouselController = CarouselController();
 
+  var vitalData = Rxn<DailyVitalModel>();
 
-  var oxygenLevel = 98.obs;       // in %
+  var oxygenLevel = 98.obs; // in %
   var bodyTemperature = 36.5.obs; // in °C
-  var heartBeat = 72.obs;         // bpm
-  RxInt alertCurrentIndex=0.obs;
-
+  var heartBeat = 72.obs; // bpm
+  RxInt alertCurrentIndex = 0.obs;
 
   @override
   void onInit() {
@@ -37,6 +38,7 @@ class HomeController extends GetxController {
     fetchWalkingData();
     fetchWaterIntakeGoal();
     fetchAlerts();
+    fetchDailyVital();
     super.onInit();
   }
 
@@ -85,6 +87,13 @@ class HomeController extends GetxController {
     if (response != null) {
       alerts.value = response;
       alerts.refresh();
+    }
+  }
+
+  void fetchDailyVital() async {
+    var response = await SupabaseService.instance.getDailyVital(DateTime.now());
+    if (response != null) {
+      vitalData.value = response;
     }
   }
 }
